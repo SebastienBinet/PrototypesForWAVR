@@ -203,14 +203,14 @@ It has been developed with the help of a great many people including (but not li
 		Rain Button
 		*/
 
-		var rainButtonMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/maserati_1.jpg" ), side: THREE.DoubleSide, transparent: true});
+		var rainButtonMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "../images/maserati_1.jpg" ), side: THREE.DoubleSide, transparent: true});
 		var rainButtonGeometry = new THREE.PlaneBufferGeometry (SQUARE_TILE_SPAN, 0.1);
 		var rainButton = new THREE.Mesh( rainButtonGeometry, rainButtonMaterial );
 		rainButton.position.x = 3;
 		rainButton.position.y = -1.5;
 		rainButton.position.z = -10;
 		rainButton.rotation.y = 180 * Math.PI/180;
-		scene.add(rainButton);
+//		scene.add(rainButton);
         
 		/*
 		List of selectable objects
@@ -384,17 +384,17 @@ It has been developed with the help of a great many people including (but not li
             
             // item's images
             for (var subIndex = 1; subIndex < 3 ; subIndex++ ) {
-                var fileName = "images/mercedes" + (indexThisItem + 1) + "." + (subIndex +1) +".jpg";
-                //                var fileName = "images/car_" + indexThisItem + "_" + subIndex +".jpg";
+                var fileName = "../images/mercedes" + (indexThisItem + 1) + "." + (subIndex +1) +".jpg";
+                //                var fileName = "../images/car_" + indexThisItem + "_" + subIndex +".jpg";
 //                if (doesFileExist(fileName)) {
                 if (doesFileExist(fileName)) {
 
-                    var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( fileName /* "images/car_2_2.jpg" */ ), side: THREE.DoubleSide, transparent: true});
+                    var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( fileName /* "../images/car_2_2.jpg" */ ), side: THREE.DoubleSide, transparent: true});
                 } else {
-                    var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/MyPlaceHolder.png" ), side: THREE.DoubleSide, transparent: true});
+                    var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "../images/MyPlaceHolder.png" ), side: THREE.DoubleSide, transparent: true});
                 }
                 
-                //                var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/car_0_0.jpg"), side: THREE.DoubleSide, transparent: true});
+                //                var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "../images/car_0_0.jpg"), side: THREE.DoubleSide, transparent: true});
                 var subitemGeometry = new THREE.PlaneBufferGeometry (3, 3);
                 var subitemMesh = new THREE.Mesh( subitemGeometry, subitemMaterial );
 
@@ -421,7 +421,7 @@ It has been developed with the help of a great many people including (but not li
 
             // item's global selection sphere
 
-            var globalSelectionSphereMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/MyPlaceHolder.png" ), side: THREE.DoubleSide, transparent: true});
+            var globalSelectionSphereMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "../images/MyPlaceHolder.png" ), side: THREE.DoubleSide, transparent: true});
             var globalSelectionSphereGeometry = new THREE.SphereGeometry( 5, 32, 32 );    
             var globalSelectionSphereMesh = new THREE.Mesh( globalSelectionSphereGeometry, globalSelectionSphereMaterial );
             // links down & up - from subitem to mesh 

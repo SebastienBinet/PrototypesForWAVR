@@ -24,7 +24,7 @@ It has been developed with the help of a great many people including (but not li
 
 <html lang="en">
 	<head>
-		<title>salon</title>
+		<title>entree</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -63,8 +63,7 @@ It has been developed with the help of a great many people including (but not li
 	<!--
 	Additional sources
 	-->
-	<script src="../lib/threex.chromakey.js"></script>
-	<script src="particles.js"></script>
+	//<script src="../lib/threex.chromakey.js"></script>
 	<script src="../js/VRCursor.js"></script>
 
 	<script>
@@ -102,37 +101,36 @@ It has been developed with the help of a great many people including (but not li
         var height3 = 0.9 / 10;
         var widthSegments3 = 30;
         var heightSegments3 =30;
-        var geometrySphere3 = new THREE.SphereGeometry(radius3, widthSegments3, heightSegments3, Math.PI * -0.5, Math.PI* 2);
+        var geometrySphere3 = new THREE.SphereGeometry(radius3, widthSegments3, heightSegments3, Math.PI * 0.5, Math.PI* 2);
 //        var geometrySphere3 = new THREE.SphereGeometry(radius3, widthSegments3, heightSegments3, Math.PI * -0.75, Math.PI* 0.5, Math.PI * 0.25, Math.PI* 0.5);
         geometrySphere3.applyMatrix( new THREE.Matrix4().makeScale( -4, 4, 4 ) );
         var materialSphere3 = new THREE.MeshBasicMaterial( { 
             transparent: true, 
             side: THREE.DoubleSide,
-            map: THREE.ImageUtils.loadTexture( 'images/PANO_20151028_102901_MilieuEscalier.jpg' )
+            map: THREE.ImageUtils.loadTexture( '../images/PANO_20151028_102603_entreeDeMaison.jpg' )
         });
         var meshSphere3 = new THREE.Mesh( geometrySphere3, materialSphere3 );
         scene.add( meshSphere3 );
 
 		/*
-		lien vers 360 de entrée
+		lien vers 360 de salon
 		*/
-		var entreeImage = new THREE.ImageUtils.loadTexture("images/B4D.png");
-		var entreeMaterial = new THREE.MeshBasicMaterial({map: entreeImage, transparent: true});
-		var entreeGeometry = new THREE.PlaneBufferGeometry(3,3);
-		var entreeButton = new THREE.Mesh( entreeGeometry, entreeMaterial );
+		var salonImage = new THREE.ImageUtils.loadTexture("../images/B4D.png");
+		var salonMaterial = new THREE.MeshBasicMaterial({map: salonImage, transparent: true});
+		var salonGeometry = new THREE.PlaneBufferGeometry(3,3);
+		var salonButton = new THREE.Mesh( salonGeometry, salonMaterial );
 
-		entreeButton.position.x = 8;
-		entreeButton.rotation.z = -2.0 * 90 * Math.PI/180;
-		entreeButton.rotation.x = -1 * 90 * Math.PI/180;
-		entreeButton.position.z = 12;
-		entreeButton.position.y = -10;
-		scene.add(entreeButton);
+		salonButton.position.x = -6;
+		salonButton.rotation.x = -1 * 90 * Math.PI/180;
+		salonButton.position.z = -16;
+		salonButton.position.y = -5.5;
+		scene.add(salonButton);
         
         
 		/*
 		List of selectable objects
 		*/
-		var selectable = [entreeButton];
+		var selectable = [salonButton];
 
 		/*
 		Create Cursor
@@ -185,9 +183,9 @@ It has been developed with the help of a great many people including (but not li
 		/*
 		Listen for keyboard events
 		*/
-		function entreeLink(){
-			if(cursor.objectMouseOver == entreeButton){
-				window.location= "./entreePage.html";
+		function salonLink(){
+			if(cursor.objectMouseOver == salonButton){
+				window.location= "./salonPage.html";
 //				window.location= "../6_escape";
 			}
 		 }
@@ -203,7 +201,7 @@ It has been developed with the help of a great many people including (but not li
 	    } else if (event.keyCode == 70 || event.keyCode == 13) { //f or enter
 	    	effect.setFullScreen(true) //fullscreen
 		} else if (event.keyCode == 32) {//space
-            entreeLink();
+            salonLink();
 	  	}
 	  }
 	  	

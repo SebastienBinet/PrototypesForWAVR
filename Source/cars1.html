@@ -136,7 +136,7 @@ It has been developed with the help of a great many people including (but not li
 		Rain Button
 		*/
 
-		var rainButtonMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/maserati_1.jpg" ), side: THREE.DoubleSide, transparent: true});
+		var rainButtonMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "../images/maserati_1.jpg" ), side: THREE.DoubleSide, transparent: true});
 		var rainButtonGeometry = new THREE.PlaneBufferGeometry (3, 3);
 		var rainButton = new THREE.Mesh( rainButtonGeometry, rainButtonMaterial );
 		rainButton.position.x = -5;
@@ -235,10 +235,10 @@ It has been developed with the help of a great many people including (but not li
             item.subitems = [];
             
             for (var subIndex = 0; subIndex < 2 ; subIndex++ ) {
-                var fileName = "images/mercedes" + (indexThisItem + 1) + "." + (subIndex +1) +".jpg";
-//                var fileName = "images/car_" + indexThisItem + "_" + subIndex +".jpg";
-                var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( fileName /* "images/car_2_2.jpg" */ ), side: THREE.DoubleSide, transparent: true});
-//                var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/car_0_0.jpg"), side: THREE.DoubleSide, transparent: true});
+                var fileName = "../images/mercedes" + (indexThisItem + 1) + "." + (subIndex +1) +".jpg";
+//                var fileName = "../images/car_" + indexThisItem + "_" + subIndex +".jpg";
+                var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( fileName /* "../images/car_2_2.jpg" */ ), side: THREE.DoubleSide, transparent: true});
+//                var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "../images/car_0_0.jpg"), side: THREE.DoubleSide, transparent: true});
                 var subitemGeometry = new THREE.PlaneBufferGeometry (3, 3);
                 var subitemMesh = new THREE.Mesh( subitemGeometry, subitemMaterial );
 
@@ -287,7 +287,7 @@ It has been developed with the help of a great many people including (but not li
 //        var Z_Mult   = 15;
 //        var Y_Offset = 0;
 //        for (var i=0; i < CAR_QTY_THIS_CIRCLE; i++) {
-//            var carMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/car_2_2.jpg" ), side: THREE.DoubleSide, transparent: true});
+//            var carMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "../images/car_2_2.jpg" ), side: THREE.DoubleSide, transparent: true});
 //            var carGeometry = new THREE.PlaneBufferGeometry (3, 3);
 //            var carMesh = new THREE.Mesh( carGeometry, carMaterial );
 //            carMesh.position.initialXPosition = - Math.sin(i / CAR_QTY_THIS_CIRCLE * 2* Math.PI) * -X_Mult;
@@ -311,7 +311,7 @@ It has been developed with the help of a great many people including (but not li
 //        var Y_Offset = 5;
 //
 //        for (var i=0; i < CAR_QTY_THIS_CIRCLE; i++) {
-//            var carMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/car_2_2.jpg" ), side: THREE.DoubleSide, transparent: true});
+//            var carMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "../images/car_2_2.jpg" ), side: THREE.DoubleSide, transparent: true});
 //            var carGeometry = new THREE.PlaneBufferGeometry (3, 3);
 //            var carMesh = new THREE.Mesh( carGeometry, carMaterial );
 //            carMesh.distance = X_Mult;
