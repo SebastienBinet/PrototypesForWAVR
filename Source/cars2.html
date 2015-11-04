@@ -63,7 +63,6 @@ It has been developed with the help of a great many people including (but not li
 	<!--
 	Additional sources
 	-->
-	<script src="../lib/threex.chromakey.js"></script>
 	<script src="../js/VRCursor.js"></script>
     
     <script src="../lib/fonts/helvetiker_regular.typeface.js"></script>
@@ -495,13 +494,13 @@ It has been developed with the help of a great many people including (but not li
             var posAtDist1 = basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(angle0ThisSubitem_Degrees, angle1ThisSubitem_Degrees);
             // step 2: compute position
             items[i].subitems[imageSubitem].current.position = {};
-            items[i].subitems[imageSubitem].current.position.x = 
+//            items[i].subitems[imageSubitem].current.position.x = 
                 posAtDist1.x * items[i].current.distance 
                 * ((imageSubitem==0) ? 1 : 1.3);
             items[i].subitems[imageSubitem].current.position.y = 
                 posAtDist1.y * items[i].current.distance
                 * ((imageSubitem==0) ? 1 : 1.3)
-                + (Math.sin(r + 2 * Math.PI * i / CAR_QTY)/3) * 0.1;
+                + (Math.sin(r + 2 * Math.PI * i / CAR_QTY)/3) * 50;
             items[i].subitems[imageSubitem].current.position.z = 
                 posAtDist1.z * items[i].current.distance
                 * ((imageSubitem==0) ? 1 : 1.3);
@@ -672,7 +671,7 @@ It has been developed with the help of a great many people including (but not li
                 (items[i].current.distance + dirRelativeAway) * (posAtDist1.x); 
               items[i].subitems[imageSubitem].current.position.y = 
 //                posAtDist1.y * (items[i].current.distance + dirRelativeAway)
-                (items[i].current.distance + dirRelativeAway) * (posAtDist1.y); 
+                (items[i].current.distance + dirRelativeAway) * (posAtDist1.y) 
                 + (Math.sin(r + 2 * Math.PI * i / CAR_QTY)/3) * 0.1;
             items[i].subitems[imageSubitem].current.position.z = 
 //                posAtDist1.z * (items[i].current.distance + dirRelativeAway);
