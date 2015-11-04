@@ -1,0 +1,957 @@
+<!--
+
+This is the standard ThreeJS-based boilerplate for webVR
+	currently being used by the eleVR team.
+
+It has oculus support for webVR browsers, support for the non-VR web,
+	and support for smartphone on google cardboard or similar VR device.
+
+Supported Navigation Controls:
+	WASD + E/Q navigation support for rotation.
+	Arrow key navigation support for moving the location of the camera.
+	Gamepad joystick navigation controls.
+	Orientation control with a VR headset OR mobile phone.
+
+Click to enter full-screen VR mode.
+
+This boilerplate is based on Mozilla's boilerplate: https://github.com/MozVR/vr-web-examples/tree/master/threejs-vr-boilerplate
+
+It has been developed with the help of a great many people including (but not limited to) Vi Hart, Andrew Lutomirski, Henry Segerman, and the Firefox webVR team.
+
+-->
+
+<!DOCTYPE html>
+
+<html lang="en">
+	<head>
+		<title>webVR boilerplate</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+
+	<body>
+		
+	</body>
+
+	<!--
+	three.js 3d library
+	-->
+	<script src="../js/three.min.js"></script>
+
+	<!--
+	PhoneVR acquires positional information from phone orientation. This is used by VRControls.js
+	VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.
+	 -->
+
+	<script src="../js/PhoneVR.js"></script>
+	<script src="../js/VRControls.js"></script>
+
+	<!--
+	VREffect.js handles stereo camera setup and rendering.
+	-->
+	<script src="../js/VREffect.js"></script>
+
+	<!--
+	Additional sources
+	-->
+	<script src="../lib/threex.chromakey.js"></script>
+	<script src="../js/VRCursor.js"></script>
+    
+    <script src="../lib/fonts/helvetiker_regular.typeface.js"></script>
+
+	<script>
+        var SQUARE_TILE_SPAN = 3; // width and hieght
+        var SPHERE_DISTANCE = 10;
+        var TILE_DEGREE_SPAN_AT_SPHERE_DISTANCE = Math.atan2(SPHERE_DISTANCE, SQUARE_TILE_SPAN / 2) *2;
+        var SUBITEMS_DEGREE_OFFSET = 36;
+        var EQUIVALENT_OF_0_DEG   =   0 * Math.PI/180;
+        var EQUIVALENT_OF_1_DEG   =   1 * Math.PI/180;
+        var EQUIVALENT_OF_45_DEG  =  45 * Math.PI/180;
+        var EQUIVALENT_OF_90_DEG  =  90 * Math.PI/180;
+        var EQUIVALENT_OF_180_DEG = 180 * Math.PI/180;
+        var X_AXIS = new THREE.Vector3(1,0,0);
+        var Y_AXIS = new THREE.Vector3(0,1,0);
+        var Z_AXIS = new THREE.Vector3(0,0,1);
+        // sin: Pi = 180
+        // rot: pi = 
+        
+        // orientation definition:
+        // in THREE.js,                (up)      
+        //                              y
+        //                              ^
+        //                             / \
+        //                            /   \
+        //                            -----
+        //                              |
+        //                              |
+        //                              |
+        //                              |
+        //                              |
+        //                              |         _
+        //                              |        | -_
+        //                              .--------|  _> x (right)
+        //                               \       |_-
+        //                                \_--_
+        //                               /     \
+        //                               \_    |
+        //                                 \_  |
+        //                                   \_|
+        //                                     \    z (behind us)
+        //                                   
+        //                  (0,0,1): right
+        //                  (0,1,0): up
+        //                  (1,0,0): behind us
+        //
+        //                  mesh.rotation.x = Math.PI / 4: pull the top of the mesh to us 
+        //                  mesh.rotation.y = Math.PI / 4: pull the left side of the mesh to us 
+        //                  mesh.rotation.z = Math.PI / 4: turn counterclockwise by 1/8 of turn
+        //
+        //                        angle1 "-90" or "-Math.PI/2" (front axis goes up)
+        //                                      |
+        // in my code,          angle0 "+90"  --+--   angle0 "-90" (front axis goes to right)
+        //                                      |
+        //                        angle1 "+90" or "+Math.PI/2"
+        //
+        
+        
+        
+//        var CAR_QTY = 20;
+        var CAR_QTY = 20;
+
+        var checkCounter =0;
+        var checkErrorCounter = 0;
+        function check_5percent(value, expected) {
+            if (expected > 0 && value > expected * 1.05) { console.log("############## error in check# " + checkCounter + " !!! Value " + value + " is to far from expected " + expected + " #######"); checkErrorCounter++;}
+            if (expected > 0 && value < expected * 0.95) { console.log("############## error in check# " + checkCounter + " !!! Value " + value + " is to far from expected " + expected + " #######"); checkErrorCounter++;}
+            if (expected < 0 && value < expected * 1.05) { console.log("############## error in check# " + checkCounter + " !!! Value " + value + " is to far from expected " + expected + " #######"); checkErrorCounter++;}
+            if (expected < 0 && value > expected * 0.95) { console.log("############## error in check# " + checkCounter + " !!! Value " + value + " is to far from expected " + expected + " #######"); checkErrorCounter++;}
+            checkCounter++;
+        }
+
+		// Setup three.js WebGL renderer
+		var renderer = new THREE.WebGLRenderer( { antialias: true } );
+		
+
+		// Append the canvas element created by the renderer to document body element.
+		document.body.appendChild( renderer.domElement );
+
+		//Create a three.js scene
+		var scene = new THREE.Scene();
+
+		//Create a three.js camera
+		var camera = new THREE.PerspectiveCamera( 110, window.innerWidth / window.innerHeight, 1, 10000 );
+		camera.position.y = 0;
+		camera.position.x = 0;
+		camera.position.z = 0;
+		scene.add(camera);
+
+		//Apply VR headset positional data to camera.
+		var controls = new THREE.VRControls( camera, undefined, 3 );
+		// controls.enableGamepad(false);
+		// controls.enableWASD(false);
+		// controls.enableArrows(false);
+
+		//Apply VR stereo rendering to renderer
+		var effect = new THREE.VREffect( renderer );
+		effect.setSize( window.innerWidth, window.innerHeight );
+        
+
+        // test text
+        var textToDisplay = "test";
+        var textShapes = THREE.FontUtils.generateShapes( textToDisplay, {'font' : 'helvetiker','weight' : 'normal', 'style' : 'normal','size' : 1,'curveSegments' : 300} );
+        var text = new THREE.ShapeGeometry( textShapes );
+        var textMesh = new THREE.Mesh( text, new THREE.MeshBasicMaterial( { color: 0xff0000 } ) ) ;
+        textMesh.position.x = 4;
+        textMesh.position.y = -2;
+        textMesh.position.z = -SPHERE_DISTANCE;
+                // textMesh.rotation.y = Math.PI / 4;
+        scene.add(textMesh);
+        // Example text options : {'font' : 'helvetiker','weight' : 'normal', 'style' : 'normal','size' : 100,'curveSegments' : 300};
+
+
+//		/*
+//		Cube walls
+//		*/
+//		var bridgeImage = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/bridge.png" ), side: THREE.DoubleSide});
+//		var billboardImage = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/billboard.png" ), side: THREE.DoubleSide});
+//		var bottomImage = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/bottom.png" ), side: THREE.DoubleSide});
+//		var topImage = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/sky.png" ), side: THREE.DoubleSide});
+//		var cityImage = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/city.png" ), side: THREE.DoubleSide});
+//		var movie = document.getElementById("movie");
+//		var videoTexture = new THREE.Texture(movie);
+//		videoTexture.minFilter = THREE.LinearFilter;
+//		videoTexture.magFilter = THREE.LinearFilter;
+//		var treeImage = new THREE.MeshBasicMaterial( { map: videoTexture, overdraw: true, side: THREE.DoubleSide } );
+//		var materials = [ bridgeImage, treeImage, topImage,  bottomImage, billboardImage, cityImage ];
+//		var diceGeometry = new THREE.BoxGeometry( 30, 30, 30);
+//		var diceMaterial = new THREE.MeshFaceMaterial( materials );
+//		var dice = new THREE.Mesh(diceGeometry, diceMaterial);
+//		dice.frustumCulled = false;
+//		scene.add( dice );
+
+
+		/*
+		Rain Button
+		*/
+
+		var rainButtonMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/maserati_1.jpg" ), side: THREE.DoubleSide, transparent: true});
+		var rainButtonGeometry = new THREE.PlaneBufferGeometry (SQUARE_TILE_SPAN, 0.1);
+		var rainButton = new THREE.Mesh( rainButtonGeometry, rainButtonMaterial );
+		rainButton.position.x = 3;
+		rainButton.position.y = -1.5;
+		rainButton.position.z = -10;
+		rainButton.rotation.y = 180 * Math.PI/180;
+		scene.add(rainButton);
+        
+		/*
+		List of selectable objects
+		*/
+//		var selectable = [rainButton];
+		var selectable = [];
+
+        
+        var items = [];
+ 		// items[i].initial.angle0_Degrees
+        //                 .angle1
+        //                 .distance
+        //                 .unfoldingValue0to1
+        //         .goal   .angle0_Degrees
+        //                 .angle1
+        //                 .distance
+        //                 .unfoldingValue0to1
+        //         .current.angle0_Degrees
+        //                 .angle1
+        //                 .distance
+		//                 .unfoldingValue0to1
+        //		   .currentlyUnderCursor
+        //         .numberSubitems
+        //         .subitem[j].mesh
+        //					  .goal   .angle0Offset_Degrees
+        //                            .angle1Offset_Degrees
+        //                    .current.angle0Offset_Degrees
+        //                            .angle1Offset_Degrees
+        //
+        //                    .current.position.x        -- mesh = current
+        //                                     .y
+        //                                     .z
+        //                            .rotation.x
+        //                                     .y
+        //                                     .z
+        
+        
+//        var CAR_QTY_CIRCLE_1 = CAR_QTY * 2/3;
+//        var CAR_QTY_CIRCLE_2 = CAR_QTY - CAR_QTY_CIRCLE_1;
+//        var CAR_QTY_THIS_CIRCLE = CAR_QTY_CIRCLE_1;
+        
+        
+        //    -90  angle0Degrees 90
+        function basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(angle0_Degrees, angle1_Degrees) {
+            var posXYZ_AtDist1 = {};
+            posXYZ_AtDist1.trtrt =0;
+//            posXYZ_AtDist1.x = - Math.sin(angle0Degrees / 360 * 2 * Math.PI) * Math.cos (angle1Degrees / 360 * 2 * Math.PI);
+//            posXYZ_AtDist1.y = - Math.sin(angle1Degrees / 360 * 2 * Math.PI);
+//            posXYZ_AtDist1.z = - Math.cos(angle0Degrees / 360 * 2 * Math.PI) * Math.cos (angle1Degrees / 360 * 2 * Math.PI);
+            posXYZ_AtDist1.x = - Math.sin(angle0_Degrees * EQUIVALENT_OF_1_DEG) * Math.cos (angle1_Degrees * EQUIVALENT_OF_1_DEG);
+            posXYZ_AtDist1.y = - Math.sin(angle1_Degrees * EQUIVALENT_OF_1_DEG);
+            posXYZ_AtDist1.z = - Math.cos(angle0_Degrees * EQUIVALENT_OF_1_DEG) * Math.cos (angle1_Degrees * EQUIVALENT_OF_1_DEG);
+            return posXYZ_AtDist1;
+        }
+        function basic_convertAngle0and1_Degrees_ToXandYandZAtDist1_validation() {
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(    0,  0).x,  0.00); // front
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(    0,  0).y,  0.00); // front
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(    0,  0).z, -1.00); // front
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(   90,  0).x, -1.00); // left
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(   90,  0).y,  0.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(   90,  0).z,  0.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  180,  0).x,  0.00); // back
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  180,  0).y,  0.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  180,  0).z,  1.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  -90,  0).x,  1.00); // right
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  -90,  0).y,  0.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  -90,  0).z,  0.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1( -180,  0).x,  0.00); // back
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1( -180,  0).y,  0.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1( -180,  0).z,  1.00);
+            
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0,   0).x,  0.00); // front
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0,   0).y,  0.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0,   0).z, -1.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0,  90).x,  0.00); // down
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0,  90).y, -1.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0,  90).z,  0.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0, 180).x,  0.00); // back, passing by the bottom, rolling
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0, 180).y,  0.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0, 180).z,  1.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0, -90).x,  0.00); // up
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0, -90).y,  1.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0, -90).z,  0.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0,-180).x,  0.00); // back, passing by the top, back-flip
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0,-180).y,  0.00);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(  0,-180).z,  1.00);
+
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1( -45      ,  0).x,  0.707); // 45 degree to right
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1( -45      ,  0).y,  0.000);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1( -45      ,  0).z, -0.707);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1( -16.70   ,  0).x,  0.2873); // 16,699 degree to right, x=3, z=-10 -> (0.2873, 0, -0.9578)
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1( -16.70   ,  0).y,  0.000);
+            check_5percent(basic_convertAngle0and1_Degrees_ToXandYandZAtDist1( -16.70   ,  0).z, -0.9578);
+        }
+        basic_convertAngle0and1_Degrees_ToXandYandZAtDist1_validation();
+
+        
+        //ref.: http://www.kirupa.com/html5/checking_if_a_file_exists.htm
+        function doesFileExist(urlToFile)
+        {
+            var xhr = new XMLHttpRequest();
+            xhr.open('HEAD', urlToFile, false);
+            xhr.send();
+     
+            if (xhr.status == "404") {
+                return false;
+            } else {
+                return true;
+            }
+        }
+        
+        // ref.: https://igotitworking.com/problem/view/69/
+        function checkUrl(url) {
+        var request = false;
+        if (window.XMLHttpRequest) {
+                request = new XMLHttpRequest;
+        } else if (window.ActiveXObject) {
+                request = new ActiveXObject("Microsoft.XMLHttp");
+        }
+
+        if (request) {
+                request.open("GET", url);
+                if (request.status == 200) { return true; }
+        }
+
+        return false;
+}
+
+        function PrepareAndAddMeshesForThisItem(TotalQtyItemsOnSphere, indexThisItem) {
+            var item = {};
+            var angle0Degrees = -10;
+            var angle1Degrees = -10;
+            if (TotalQtyItemsOnSphere <10) {
+                angle0Degrees = 360 / 10 * indexThisItem;
+                angle1Degrees = 0 * 360 / 10;
+            } else if (TotalQtyItemsOnSphere < 24) {
+                if (indexThisItem < 10) {
+                    angle0Degrees = 360 / 10 * indexThisItem;
+                    angle1Degrees = 0 * 360 / 10;
+                } else if (indexThisItem < 17) {
+                    angle0Degrees = 360 / 7 * (indexThisItem - 10);
+                    angle1Degrees = 1 * 360 / 10;
+                } else if (indexThisItem < 24) {
+                    angle0Degrees = 360 / 7 * (indexThisItem - 10 - 7);
+                    angle1Degrees = -1 * 360 / 10;
+                }
+            }
+            
+            item.initial = {};
+            item.initial.angle0_Degrees             = angle0Degrees;
+            item.initial.angle1_Degrees             = angle1Degrees;
+            item.initial.distance           = SPHERE_DISTANCE;
+            item.initial.unfoldingValue0to1 = 1;
+            
+            item.goal    = {};
+            item.goal   .angle0_Degrees             = item.initial.angle0_Degrees;
+            item.goal   .angle1_Degrees             = item.initial.angle1_Degrees;
+            item.goal   .distance           = item.initial.distance;
+            item.goal   .unfoldingValue0to1 = 0.0;
+            
+            item.current = {};
+            item.current.angle0_Degrees             = item.initial.angle0_Degrees;
+            item.current.angle1_Degrees             = item.initial.angle1_Degrees;
+            item.current.distance           = item.initial.distance;
+            item.current.unfoldingValue0to1 = item.initial.unfoldingValue0to1;
+            
+            item.currentlyUnderCursor = false;
+
+            item.numberSubitems = 0;
+            item.subitems = [];
+            
+            // item's images
+            for (var subIndex = 1; subIndex < 3 ; subIndex++ ) {
+                var fileName = "images/mercedes" + (indexThisItem + 1) + "." + (subIndex +1) +".jpg";
+                //                var fileName = "images/car_" + indexThisItem + "_" + subIndex +".jpg";
+//                if (doesFileExist(fileName)) {
+                if (doesFileExist(fileName)) {
+
+                    var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( fileName /* "images/car_2_2.jpg" */ ), side: THREE.DoubleSide, transparent: true});
+                } else {
+                    var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/MyPlaceHolder.png" ), side: THREE.DoubleSide, transparent: true});
+                }
+                
+                //                var subitemMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/car_0_0.jpg"), side: THREE.DoubleSide, transparent: true});
+                var subitemGeometry = new THREE.PlaneBufferGeometry (3, 3);
+                var subitemMesh = new THREE.Mesh( subitemGeometry, subitemMaterial );
+
+                var subitem     = {};
+                subitem.goal    = {};
+                subitem.goal.angle0Offset_Degrees = 0;
+                subitem.goal.angle1Offset_Degrees = 0;
+                subitem.current = {};
+                subitem.current.angle0Offset_Degrees = subIndex*SUBITEMS_DEGREE_OFFSET;
+                subitem.current.angle1Offset_Degrees = 0;
+                // links down & up - from subitem to mesh 
+                subitem.mesh = subitemMesh;
+                subitemMesh.linkUp = subitem;
+            
+                // links down & up - from item to subitem 
+                item.subitems.push(subitem);
+                item.numberSubitems++;
+                subitem.linkUp = item;
+                
+                selectable.push(subitemMesh);
+                scene.add(subitemMesh);
+ 
+            }
+
+            // item's global selection sphere
+
+            var globalSelectionSphereMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "images/MyPlaceHolder.png" ), side: THREE.DoubleSide, transparent: true});
+            var globalSelectionSphereGeometry = new THREE.SphereGeometry( 5, 32, 32 );    
+            var globalSelectionSphereMesh = new THREE.Mesh( globalSelectionSphereGeometry, globalSelectionSphereMaterial );
+            // links down & up - from subitem to mesh 
+            subitem.mesh = subitemMesh;
+            subitemMesh.linkUp = subitem;
+            
+            // links down & up - from item to subitem 
+            item.subitems.push(subitem);
+            item.numberSubitems++;
+            subitem.linkUp = item;
+                
+            selectable.push(subitemMesh);
+            scene.add(subitemMesh);
+            items.push(item);
+        }
+
+        for (var i=0; i < CAR_QTY; i++) {
+            PrepareAndAddMeshesForThisItem(CAR_QTY, i);
+        }
+
+
+		/*
+		Create Cursor
+		*/
+		var cursor = new VRCursor();
+		cursor.ready.then(function() {
+	    	scene.add(cursor.layout);
+	    	cursor.init(renderer.domElement, camera, scene, selectable);
+	    	cursor.enable();
+	    });
+
+		/*
+		Rain Game
+		*/
+		var c = 0;
+		var rainSecs = 10;
+		var maxTimer = rainSecs * 60;
+		
+		/*
+		Request animation frame loop function
+		*/
+		var t = 1;
+		var r = 1;
+		var prevSelected = null;
+		var raining = 0;
+        
+        function L0_ResetGoals() {
+            for (var i=0; i < CAR_QTY; i++) {
+                items[i].goal.angle0_Degrees                    = items[i].initial.angle0_Degrees;
+                items[i].goal.angle1_Degrees                    = items[i].initial.angle1_Degrees;
+                items[i].goal.distance                  = items[i].initial.distance;
+                items[i].goal.unfoldingValue0to1        = 0;
+                items[i].subitems[1].goal.angle0Offset_Degrees  = 0;
+                items[i].subitems[1].goal.angle1Offset_Degrees  = 0;
+                items[i].subitems[2].goal.angle0Offset_Degrees  = 0;
+                items[i].subitems[2].goal.angle1Offset_Degrees  = 0;
+            }
+        }
+        
+        function L0_ResetHilights() {
+            for (var i=0; i < CAR_QTY; i++) {
+                items[i].subitems[0].mesh.material.color.set(0xFFFFFF);
+            }
+        }
+
+        function L3_computeCurrentMeshPositionForSubitem(i, imageSubitem) {
+            // step 1: compute angles
+            // warning: the following code is duplicated !
+            var angle0ThisSubitem_Degrees = items[i].current.angle0_Degrees + /*TILE_DEGREE_SPAN_AT_SPHERE_DISTANCE*/ items[i].subitems[imageSubitem].current.angle0Offset_Degrees;
+            var angle1ThisSubitem_Degrees = items[i].current.angle1_Degrees + items[i].subitems[imageSubitem].current.angle1Offset_Degrees;
+            var posAtDist1 = basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(angle0ThisSubitem_Degrees, angle1ThisSubitem_Degrees);
+            // step 2: compute position
+            items[i].subitems[imageSubitem].current.position = {};
+            items[i].subitems[imageSubitem].current.position.x = 
+                posAtDist1.x * items[i].current.distance 
+                * ((imageSubitem==0) ? 1 : 1.3);
+            items[i].subitems[imageSubitem].current.position.y = 
+                posAtDist1.y * items[i].current.distance
+                * ((imageSubitem==0) ? 1 : 1.3)
+                + (Math.sin(r + 2 * Math.PI * i / CAR_QTY)/3) * 0.1;
+            items[i].subitems[imageSubitem].current.position.z = 
+                posAtDist1.z * items[i].current.distance
+                * ((imageSubitem==0) ? 1 : 1.3);
+            
+            // apply it to mesh
+            items[i].subitems[imageSubitem].mesh.position.x = items[i].subitems[imageSubitem].current.position.x;
+            items[i].subitems[imageSubitem].mesh.position.y = items[i].subitems[imageSubitem].current.position.y;
+            items[i].subitems[imageSubitem].mesh.position.z = items[i].subitems[imageSubitem].current.position.z;
+        }
+        
+        
+        
+        function L3_computeCurrentMeshRotationForSubitem(i, imageSubitem) {
+            // step 1: compute angles
+            // warning: the following code is duplicated !
+            var angle0ThisSubitem_Degrees = items[i].current.angle0_Degrees + items[i].subitems[imageSubitem].current.angle0Offset_Degrees;
+            var angle1ThisSubitem_Degrees = items[i].current.angle1_Degrees + items[i].subitems[imageSubitem].current.angle1Offset_Degrees;
+
+            
+            var tempOnlyForRotInfo =new THREE.Object3D();
+            tempOnlyForRotInfo.rotateOnAxis(Y_AXIS, angle0ThisSubitem_Degrees  * Math.PI/180);
+            tempOnlyForRotInfo.rotateOnAxis(X_AXIS, - angle1ThisSubitem_Degrees  * Math.PI/180);
+
+            items[i].subitems[imageSubitem].current.rotation = {};
+            items[i].subitems[imageSubitem].current.rotation.x = tempOnlyForRotInfo.rotation.x;
+            items[i].subitems[imageSubitem].current.rotation.y = tempOnlyForRotInfo.rotation.y;
+            items[i].subitems[imageSubitem].current.rotation.z = tempOnlyForRotInfo.rotation.z;
+            items[i].subitems[imageSubitem].mesh.rotation.x = tempOnlyForRotInfo.rotation.x;
+            items[i].subitems[imageSubitem].mesh.rotation.y = tempOnlyForRotInfo.rotation.y;
+            items[i].subitems[imageSubitem].mesh.rotation.z = tempOnlyForRotInfo.rotation.z;
+            
+        }
+        
+        function basic_compute_dirRelativeAway(in_0to1, itemLength_0toInf) {
+            return (itemLength_0toInf * (Math.cos(Math.PI/2 * in_0to1)) /* / 2 */ );
+        }
+        function basic_compute_dirRelativeAway_validation() {
+            check_5percent(basic_compute_dirRelativeAway(0  ,  1),  0.50);
+            check_5percent(basic_compute_dirRelativeAway(0.5,  1),  0.35);
+            check_5percent(basic_compute_dirRelativeAway(1  ,  1),  0.00);
+            check_5percent(basic_compute_dirRelativeAway(0  , 10),  5.00);
+            check_5percent(basic_compute_dirRelativeAway(0.5, 10),  3.53);
+            check_5percent(basic_compute_dirRelativeAway(1  , 10),  0.00);
+        }
+        basic_compute_dirRelativeLateral_validation();
+        
+        function basic_compute_dirRelativeLateral(in_0to1, itemLength_0toInf) {
+            return (itemLength_0toInf /2  * (1 + Math.sin(Math.PI * in_0to1 / 2)));
+        }
+        function basic_compute_dirRelativeLateral_validation() {
+            check_5percent(basic_compute_dirRelativeLateral(0  ,  1),  0.50);
+            check_5percent(basic_compute_dirRelativeLateral(0.5,  1),  0.85);
+            check_5percent(basic_compute_dirRelativeLateral(1  ,  1),  1.00);
+            check_5percent(basic_compute_dirRelativeLateral(0  , 10),  5.00);
+            check_5percent(basic_compute_dirRelativeLateral(0.5, 10),  8.53);
+            check_5percent(basic_compute_dirRelativeLateral(1  , 10), 10.00);
+        }
+        basic_compute_dirRelativeAway_validation();
+
+        
+        function basic_compute_dirRelativeAngle_Degrees(dirRelativeLateral_0toInf, dirRelativeAway_0toInf, mainObjectDistanceToViewer_0toInf) {
+            return (Math.atan2(dirRelativeLateral_0toInf, mainObjectDistanceToViewer_0toInf + dirRelativeAway_0toInf) / EQUIVALENT_OF_1_DEG);
+        }
+        function basic_compute_dirRelativeAngle_Degrees_validation() {
+            check_5percent(basic_compute_dirRelativeAngle_Degrees(0  ,  0,  1),  0);
+            check_5percent(basic_compute_dirRelativeAngle_Degrees(0  ,  1,  1),  0);
+            check_5percent(basic_compute_dirRelativeAngle_Degrees(0  ,  0, 10),  0);
+            check_5percent(basic_compute_dirRelativeAngle_Degrees(1  ,  0,  1), 45); // 45 degree
+            check_5percent(basic_compute_dirRelativeAngle_Degrees(2  ,  1,  1), 45); // 45 degree
+            check_5percent(basic_compute_dirRelativeAngle_Degrees(20 , 10, 10), 45); // 45 degree
+        }
+        basic_compute_dirRelativeAngle_Degrees_validation();
+
+        
+        function basic_compute_angleRelative_m90p90_Degrees(in_0to1) {
+            return ( 9* Math.PI /2 * ( -1 + in_0to1) / EQUIVALENT_OF_1_DEG); 
+        }
+         function basic_compute_angleRelative_m90p90_Degrees_validation() {
+            check_5percent(basic_compute_angleRelative_m90p90_Degrees( 0    ), -90);
+            check_5percent(basic_compute_angleRelative_m90p90_Degrees( 0.5  ), -45);
+            check_5percent(basic_compute_angleRelative_m90p90_Degrees( 0.999),   0);
+         }
+        basic_compute_angleRelative_m90p90_Degrees_validation();
+       
+        //               *     : Lateral: SQUARE_TILE_SPAN * (1 + sin(0)) / 2  -> == "*0.5"
+        //               |.    : Away:    SQUARE_TILE_SPAN * (0 + cos(0)) / 2  -> == "*0.5"
+        //               |.    : Angle:   atan(Lateral/dist0+Away)
+        //               |.
+        //               | .
+        //                -.--#
+        //                 .
+        //                  .             *      : Lateral: SQUARE_TILE_SPAN * (1 + sin(45)) / 2   -> == "*0.8535"
+        //                  .             |.     : Away:    SQUARE_TILE_SPAN * (0 + cos(45)) / 2   -> == "*0.3535"
+        //                  .              .----#: Angle:   atan(Lateral/dist0+Away)
+        //                   .             .
+        //                   .              .                           *---------#: Lateral: SQUARE_TILE_SPAN * (1 + sin(90)) / 2   -> == "*1"
+        //                   .              .                            .         : Away:    SQUARE_TILE_SPAN * (0 + cos(90)) / 2   -> == "*0"
+        //                    .             .                             .        : Angle:   atan(Lateral/dist0+Away)
+        //                    .             .                              .          
+        //                    .              .                              .         
+        //                    .              .                               .        
+        //                                                                    .      
+        //                                                                          
+        //               | : 90 degree
+        //               |              \  : 45 degree
+        //               |               \                             ---: 0 degree
+        //                                \
+        //
+        //
+        //              step:0.0          step:0.5                          step:1.0
+        //
+        //               +++++++++++                  
+        //              1+222222222+   
+        //              1+222222222+   
+        //              1+222222222+   
+        //              1+222222222+   
+        //  dist1       1*2222*2222+   
+        //              1+222222222+   1+1 ++++++++++++
+        //  dist1       1+222222222+    1+1+2222222222+
+        //              1+222222222+     1*+2222*22222+
+        //              1+222222222+      1+2222222222+             111111111 222222222 
+        //  dist0/1      +++++#+++++       +++++*++++++            +++++*+++++++++*+++++
+        //                000000000         0000000000              111111111 222222222
+        //                          
+        //                
+        //                
+        //                
+        //                
+        //                  \   /             \   /                             \   /
+        //                   \ /               \ /                               \ /
+        //  top view          .                 .                                 .
+        //
+        function L3_computeCurrentMeshPositionAndRotationForSubitem(i, imageSubitem) {
+            // step 1: convert current unfolding value to position relative to parent item
+//            var dirRelativeAway = SQUARE_TILE_SPAN * Math.cos(Math.PI * items[i].subitems[imageSubitem].current.unfoldingValue0to1);
+//            var dirRelativeAway = SQUARE_TILE_SPAN/2 * Math.cos(Math.PI/2 * items[i].current.unfoldingValue0to1);
+            var dirRelativeAway = 0;
+            if (imageSubitem != 0) {
+                dirRelativeAway = basic_compute_dirRelativeAway(items[i].current.unfoldingValue0to1, SQUARE_TILE_SPAN);
+            }
+//            var dirRelativeLateral = SQUARE_TILE_SPAN * -Math.cos(Math.PI * items[i].subitems[imageSubitem].current.unfoldingValue0to1);
+//            var dirRelativeLateral = imageSubitem *1000 + SQUARE_TILE_SPAN/2 * (1 + Math.sin(Math.PI * items[i].current.unfoldingValue0to1 / 2));
+            var dirRelativeLateral = basic_compute_dirRelativeLateral(items[i].current.unfoldingValue0to1, SQUARE_TILE_SPAN);
+//            var dirRelativeAngle_Degrees = Math.atan2(dirRelativeLateral, items[i].current.distance + dirRelativeAway);
+            var dirRelativeAngle_Degrees = basic_compute_dirRelativeAngle_Degrees(dirRelativeLateral, dirRelativeAway, items[i].current.distance);
+            
+            // step 2: convert current unfolding value to angle relative to parent item
+//            var angleRelative_m90p90_Degrees = /*Math.PI / 2 * cos( */Math.PI * items[i].subitems[imageSubitem].current.unfoldingValue0to1 /*)*/ ; 
+//            var angleRelative_m90p90_Degrees = Math.PI * ( -0.5 + items[i].current.unfoldingValue0to1); 
+            var angleRelative_m90p90_Degrees = basic_compute_angleRelative_m90p90_Degrees( items[i].current.unfoldingValue0to1); 
+ 
+            // step 3: compute relative angles (angle in from camera view)
+            var angle0ThisSubitem_Degrees = items[i].current.angle0_Degrees;
+            var angle1ThisSubitem_Degrees = items[i].current.angle1_Degrees;
+            if (imageSubitem == 1) {
+                angle0ThisSubitem_Degrees += dirRelativeAngle_Degrees;
+            } else if (imageSubitem == 2) {
+                angle1ThisSubitem_Degrees += dirRelativeAngle_Degrees;
+            }
+            // step 3: compute distance
+            var posAtDist1 = basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(angle0ThisSubitem_Degrees, angle1ThisSubitem_Degrees);
+
+            
+            // step 4: compute world position
+            items[i].subitems[imageSubitem].current.position = {};
+            items[i].subitems[imageSubitem].current.position.x = //(dirRelativeAway*2*imageSubitem)+
+//                posAtDist1.x * (items[i].current.distance + 10*dirRelativeAway); 
+                (items[i].current.distance + dirRelativeAway) * (posAtDist1.x); 
+              items[i].subitems[imageSubitem].current.position.y = 
+//                posAtDist1.y * (items[i].current.distance + dirRelativeAway)
+                (items[i].current.distance + dirRelativeAway) * (posAtDist1.y); 
+                + (Math.sin(r + 2 * Math.PI * i / CAR_QTY)/3) * 0.1;
+            items[i].subitems[imageSubitem].current.position.z = 
+//                posAtDist1.z * (items[i].current.distance + dirRelativeAway);
+                (items[i].current.distance + dirRelativeAway) * (posAtDist1.z); 
+          if(i==1 && imageSubitem== 0) {
+                console.log(
+                    "0 to 1: " + (Math.round(100*items[i].current.unfoldingValue0to1) /* 100 + 0.001*/) + ", " +
+                    "lat: "    + (Math.round(100*dirRelativeLateral)                  /* 100 + 0.001*/) + ", " +
+                    "away: "   + (Math.round(100*dirRelativeAway)                  /* 100 + 0.001*/) + ", " +
+                    "ang: "    + (Math.round(1*dirRelativeAngle_Degrees )                    /* 100 + 0.001*/) + ", " +
+                    "dist: "   + (Math.round(100*items[i].current.distance)           /* 100 + 0.001*/) + ", " +
+                    "angle0: " + (Math.round(1*angle0ThisSubitem_Degrees )                   /* 100 + 0.001*/) + ", " + 
+                    "angle1: " + (Math.round(1*angle1ThisSubitem_Degrees )                   /* 100 + 0.001*/) + ", " + 
+                    "x1: "     + (Math.round(100*posAtDist1.x)                        /* 100 + 0.001*/) + ", " + 
+                    "y1: "     + (Math.round(100*posAtDist1.y)                        /* 100 + 0.001*/) + ", " + 
+                    "z1: "     + (Math.round(100*posAtDist1.z)                        /* 100 + 0.001*/) + ", " + 
+                    "x: "      + (Math.round(100*items[i].subitems[imageSubitem].current.position.x) / 100 /*+ 0.001*/) + ", " +
+                    "y: "      + (Math.round(100*items[i].subitems[imageSubitem].current.position.y) / 100 /*+ 0.001*/) + ", " +
+                    "z: "      + (Math.round(100*items[i].subitems[imageSubitem].current.position.z) / 100 /*+ 0.001*/) + ", " +
+                    "xm90p90: "+ (Math.round(1*angleRelative_m90p90_Degrees) /* / 100 + 0.001*/)
+                );}
+            
+            // step 5: compute world rotation
+            var tempOnlyForRotInfo =new THREE.Object3D();
+            if (imageSubitem == 1) {
+                angle0ThisSubitem_Degrees += angleRelative_m90p90_Degrees;
+            } else if (imageSubitem == 2) {
+                angle1ThisSubitem_Degrees += angleRelative_m90p90_Degrees;
+            }
+            tempOnlyForRotInfo.rotateOnAxis(Y_AXIS,   angle0ThisSubitem_Degrees  * EQUIVALENT_OF_1_DEG /** Math.PI/180*/);
+            tempOnlyForRotInfo.rotateOnAxis(X_AXIS, - angle1ThisSubitem_Degrees  * EQUIVALENT_OF_1_DEG /** Math.PI/180*/);
+
+            items[i].subitems[imageSubitem].current.rotation = {};
+            items[i].subitems[imageSubitem].current.rotation.x = tempOnlyForRotInfo.rotation.x;
+            items[i].subitems[imageSubitem].current.rotation.y = tempOnlyForRotInfo.rotation.y;
+            items[i].subitems[imageSubitem].current.rotation.z = tempOnlyForRotInfo.rotation.z;
+
+            
+            // step 6: apply results to mesh
+            items[i].subitems[imageSubitem].mesh.position.x = items[i].subitems[imageSubitem].current.position.x;
+            items[i].subitems[imageSubitem].mesh.position.y = items[i].subitems[imageSubitem].current.position.y;
+            items[i].subitems[imageSubitem].mesh.position.z = items[i].subitems[imageSubitem].current.position.z;
+            items[i].subitems[imageSubitem].mesh.rotation.x = tempOnlyForRotInfo.rotation.x;
+            items[i].subitems[imageSubitem].mesh.rotation.y = tempOnlyForRotInfo.rotation.y;
+            items[i].subitems[imageSubitem].mesh.rotation.z = tempOnlyForRotInfo.rotation.z;
+        }
+
+        function L3_computeCurrentMeshScaleForSubitem(i, imageSubitem) {
+        }
+
+        function L2_computeCurrentMeshForSubitem(i, imageSubitem) {
+//            L3_computeCurrentMeshPositionForSubitem(i, imageSubitem);
+//            L3_computeCurrentMeshRotationForSubitem(i, imageSubitem);
+            L3_computeCurrentMeshPositionAndRotationForSubitem(i, imageSubitem);
+            L3_computeCurrentMeshScaleForSubitem(i, imageSubitem);
+        }
+        
+        function L1_computeCurrentMeshesForItem(i) {
+            // process main image, secondary images and texts (they are all meshes)
+            for (var imageSubitem = 0 ; imageSubitem < items[i].numberSubitems; imageSubitem++) {
+                L2_computeCurrentMeshForSubitem(i, imageSubitem);
+            }
+        }
+        function L0_setThreeJsValues() {
+            // set positions in three.js
+            for (var i=0 ;i<CAR_QTY ; i++) {
+                
+                L1_computeCurrentMeshesForItem(i);
+            }
+        }
+        
+        function findInfoForThisMesh(meshToAnalyse) {
+            var subitemHoldingThisMesh;
+            var itemHoldingTheSubitemHoldingThisMesh;
+            if (meshToAnalyse) {
+                subitemHoldingThisMesh = meshToAnalyse.linkUp;
+                if ( subitemHoldingThisMesh) {
+                    itemHoldingTheSubitemHoldingThisMesh = subitemHoldingThisMesh.linkUp;
+                    if (itemHoldingTheSubitemHoldingThisMesh) {
+                    }
+                }
+            }
+            var fullInfo = {};
+            
+            fullInfo.item = itemHoldingTheSubitemHoldingThisMesh;   // may be undefined
+            fullInfo.subitem = subitemHoldingThisMesh;              // may be undefined
+            fullInfo.mesh = meshToAnalyse;                          // may be undefined
+            return fullInfo;                                        // always defined
+        }
+        
+        function L0_handleCursorEffect() {
+			//The Rain button hilighter
+			if (cursor.enabled) {
+        		cursor.updatePosition();
+                
+                var objectMouseOverInfo = findInfoForThisMesh(cursor.objectMouseOver);
+                if (objectMouseOverInfo.item) {
+                    // means: cursor on something
+                    if (! objectMouseOverInfo.item.currentlyUnderCursor) {
+                        // means: cursor just went over
+                        // highlight the item -- TBD: do for all subitems
+                        objectMouseOverInfo.item.subitems[0].mesh.material.color.set(0x66FFFF);
+                        objectMouseOverInfo.item.goal.distance = objectMouseOverInfo.item.initial.distance * 0.4;
+                        objectMouseOverInfo.item.subitems[1].goal.angle0Offset_Degrees = SUBITEMS_DEGREE_OFFSET;
+                        objectMouseOverInfo.item.subitems[1].goal.angle1Offset_Degrees = 0;
+                        objectMouseOverInfo.item.subitems[2].goal.angle0Offset_Degrees = 0;
+                        objectMouseOverInfo.item.subitems[2].goal.angle1Offset_Degrees = -SUBITEMS_DEGREE_OFFSET;
+                        
+                        objectMouseOverInfo.item.goal.unfoldingValue0to1 = 1.0;
+
+                        
+                        // Make place by pushing away other items
+                        for (var i=0 ;i<CAR_QTY ; i++) {
+                            // process all items except the one under the cursor
+                            if (items[i] != objectMouseOverInfo.item) {
+                                var deltaAngle0_Degrees = objectMouseOverInfo.item.initial.angle0_Degrees - items[i].initial.angle0_Degrees;
+                                var deltaAngle1_Degrees = objectMouseOverInfo.item.initial.angle1_Degrees - items[i].initial.angle1_Degrees;
+                                if (deltaAngle0_Degrees >  180) {deltaAngle0_Degrees -= 360;}
+                                if (deltaAngle0_Degrees < -180) {deltaAngle0_Degrees += 360;}
+                                if (deltaAngle1_Degrees >  180) {deltaAngle1_Degrees -= 360;}
+                                if (deltaAngle1_Degrees < -180) {deltaAngle1_Degrees += 360;}
+                                var directAngleSeparation = Math.sqrt(
+                                    Math.pow(deltaAngle0_Degrees, 2) + 
+                                    Math.pow(deltaAngle1_Degrees, 2)
+                                );
+                                if (directAngleSeparation >  180) {directAngleSeparation -= 360;}
+                                if (directAngleSeparation <- 180) {directAngleSeparation += 360;}
+                                // push away
+                                var pushDirectionAngle0 = (deltaAngle0_Degrees >= 0 ) ? -1 : 1;
+                                var pushDirectionAngle1 = (deltaAngle1_Degrees >= 0 ) ? -1 : 1;
+
+                                var pushStrength = (180 - directAngleSeparation) * 0.005;
+//                                var pushDistanceAngle0 = (Math.abs(deltaAngle0_Degrees) < 5) ? 50 : 360 / directAngleSeparation
+                                items[i].goal.angle0_Degrees = items[i].initial.angle0_Degrees - /*pushDirectionAngle0 * */ deltaAngle0_Degrees * pushStrength; //pushStrength;
+                                items[i].goal.angle1_Degrees = items[i].initial.angle1_Degrees - /*pushDirectionAngle1 * */ deltaAngle1_Degrees * pushStrength; //pushStrength;
+                            }
+                            // compute angle to current object.
+                        }
+//                    for (var i=0 ;i<CAR_QTY ; i++) {
+//                                        if ( cursor.objectMouseOver === selectable[i] && cursor.objectMouseOver !== null && prevSelected !== cursor.objectMouseOver) {
+                                                // cursor is on this object. So we affect this object ...
+                                                //selectable[i].material.color.set(0x66FFFF);
+                                                //selectable[i].effect.distanceRatio *= 0.9;
+                                                //selectable[i].position.z *= 1.3;
+                                                // ... and we affect all other objects near it 
+                                                //for (var j=0 ;j<CAR_QTY ; j++) {
+                                                //        if ( cursor.objectMouseOver != selectable[i]) {
+                                                                // TBD: compute angle offset to make place.
+                                                                //       var distanceAngle0 = 
+                                                                //    selectable[i].effect.distanceRatio *= 
+                                                //        }
+                                                //}
+                                        //}
+                                    //if ( cursor.objectMouseOver === selectable[i] ) {
+                                    ////        		        	dogAudio.play();
+                                    //                        } else {
+                                    ////        	 		      dogAudio.pause();
+                                    //                        }
+                                }
+                
+                }
+                } else {
+                    // cursor on nothing
+                    for (var i=0 ;i<CAR_QTY ; i++) {
+                        if (cursor.objectMouseOver !== selectable[i] && prevSelected === selectable[i]) {
+                            prevSelected.material.color.set(0xffffff);
+        		      }
+                    }
+
+                }
+
+        		prevSelected = cursor.objectMouseOver;
+        	
+        }
+        
+        function L0_computeSpringAndDragEffect() {
+            for (var i=0 ;i<CAR_QTY ; i++) {
+                for (var imageSubitem = 0 ; imageSubitem < items[i].numberSubitems; imageSubitem++) {
+                    items[i].current.angle0_Degrees = 
+                        items[i].goal.angle0_Degrees * 5/100 +
+                        items[i].current.angle0_Degrees * 95/100;
+                    items[i].current.angle1_Degrees = 
+                        items[i].goal.angle1_Degrees * 5/100 +
+                        items[i].current.angle1_Degrees * 95/100;
+                    items[i].current.distance = 
+                        items[i].goal.distance * 5/100 +
+                        items[i].current.distance * 95/100;
+                    items[i].subitems[imageSubitem].current.angle0Offset_Degrees = 
+                        items[i].subitems[imageSubitem].goal.angle0Offset_Degrees * 5/100 +
+                        items[i].subitems[imageSubitem].current.angle0Offset_Degrees * 95/100;
+                    items[i].subitems[imageSubitem].current.angle1Offset_Degrees = 
+                        items[i].subitems[imageSubitem].goal.angle1Offset_Degrees * 5/100 +
+                        items[i].subitems[imageSubitem].current.angle1Offset_Degrees * 95/100;
+                    items[i].current.unfoldingValue0to1 = 
+                        items[i].goal.unfoldingValue0to1 * 5/100 +
+                        items[i].current.unfoldingValue0to1 * 95/100;
+                }
+                
+            }
+        }
+
+		function animate() {
+
+			//Rain Button animation
+			r += .05;
+			//rainButton.position.y = (Math.sin(r)/3)-0.0;
+			//Walking animation
+			t += .007; 
+			t = t%(2*Math.PI);
+
+
+            L0_ResetGoals();
+            L0_ResetHilights();
+            L0_handleCursorEffect();
+            L0_computeSpringAndDragEffect();
+            L0_setThreeJsValues();
+
+        		
+
+            //Update camera position to stay in box.
+        	if (camera.position.x>13.5){
+        		camera.position.x = 13.5;
+        	}
+        	if (camera.position.x<-13.5){
+        		camera.position.x = -13.5;
+        	}
+        	if (camera.position.z>13.5){
+        		camera.position.z = 13.5;
+        	}
+        	if (camera.position.z<-13.5){
+        		camera.position.z = -13.5;
+        	}
+
+			//Update VR headset position and apply to camera.
+			controls.update();
+
+			// Render the scene through the VREffect.
+			effect.render( scene, camera );
+			requestAnimationFrame( animate );
+		}
+
+		animate();	// Kick off animation loop
+
+
+		/*
+		Listen for keyboard events
+		*/
+		function onkey(event) {
+	    event.preventDefault();
+
+	    if (event.keyCode == 90) { // z
+	    	controls.resetSensor(); //zero rotation
+	    } else if (event.keyCode == 70 || event.keyCode == 13) { //f or enter
+	    	effect.setFullScreen(true) //fullscreen
+		} else if (event.keyCode == 32) {//space
+	  	}
+	  }
+	  	
+
+	  	window.addEventListener("keydown", onkey, true);
+
+		/*
+		Handle window resizes
+		*/
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			effect.setSize( window.innerWidth, window.innerHeight );
+		}
+		window.addEventListener( 'resize', onWindowResize, false );
+        
+        
+        
+        if ( checkErrorCounter != 0 ) {
+//            while(1) {
+                console.log("######## THERE WERE " + checkErrorCounter + " VALIDATION ERRORS!!! BETTER CHECK THE LOG ###########");
+//            }
+        } else {
+                console.log("No error. " + checkCounter+ " validations passed.");
+        }
+	</script>
+</html>
