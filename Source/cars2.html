@@ -124,7 +124,7 @@ It has been developed with the help of a great many people including (but not li
         
         
 //        var CAR_QTY = 20;
-        var CAR_QTY = 20;
+        var CAR_QTY = 100;
 
         var checkCounter =0;
         var checkErrorCounter = 0;
@@ -321,22 +321,22 @@ It has been developed with the help of a great many people including (but not li
             }
         }
         
-        // ref.: https://igotitworking.com/problem/view/69/
-        function checkUrl(url) {
-        var request = false;
-        if (window.XMLHttpRequest) {
-                request = new XMLHttpRequest;
-        } else if (window.ActiveXObject) {
-                request = new ActiveXObject("Microsoft.XMLHttp");
-        }
-
-        if (request) {
-                request.open("GET", url);
-                if (request.status == 200) { return true; }
-        }
-
-        return false;
-}
+//        // ref.: https://igotitworking.com/problem/view/69/
+//        function checkUrl(url) {
+//            var request = false;
+//            if (window.XMLHttpRequest) {
+//                request = new XMLHttpRequest;
+//            } else if (window.ActiveXObject) {
+//                request = new ActiveXObject("Microsoft.XMLHttp");
+//            }
+//
+//            if (request) {
+//                request.open("GET", url);
+//                if (request.status == 200) { return true; }
+//            }
+//
+//            return false;
+//        }
 
         function PrepareAndAddMeshesForThisItem(TotalQtyItemsOnSphere, indexThisItem) {
             var item = {};
@@ -356,6 +356,12 @@ It has been developed with the help of a great many people including (but not li
                     angle0Degrees = 360 / 7 * (indexThisItem - 10 - 7);
                     angle1Degrees = -1 * 360 / 10;
                 }
+            } else if (TotalQtyItemsOnSphere == 100) {
+                    var i0 = indexThisItem % 10;
+                    var i1_temp = Math.floor(indexThisItem / 10);
+                    var i1 = ((i1_temp == 0) ? 0 : (i1_temp <= 5) ? (i1_temp) : (5 -i1_temp));
+                    angle0Degrees = 360 / 20 * i0 - 90;
+                    angle1Degrees = 18 * i1;
             }
             
             item.initial = {};
@@ -486,53 +492,53 @@ It has been developed with the help of a great many people including (but not li
             }
         }
 
-        function L3_computeCurrentMeshPositionForSubitem(i, imageSubitem) {
-            // step 1: compute angles
-            // warning: the following code is duplicated !
-            var angle0ThisSubitem_Degrees = items[i].current.angle0_Degrees + /*TILE_DEGREE_SPAN_AT_SPHERE_DISTANCE*/ items[i].subitems[imageSubitem].current.angle0Offset_Degrees;
-            var angle1ThisSubitem_Degrees = items[i].current.angle1_Degrees + items[i].subitems[imageSubitem].current.angle1Offset_Degrees;
-            var posAtDist1 = basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(angle0ThisSubitem_Degrees, angle1ThisSubitem_Degrees);
-            // step 2: compute position
-            items[i].subitems[imageSubitem].current.position = {};
-//            items[i].subitems[imageSubitem].current.position.x = 
-                posAtDist1.x * items[i].current.distance 
-                * ((imageSubitem==0) ? 1 : 1.3);
-            items[i].subitems[imageSubitem].current.position.y = 
-                posAtDist1.y * items[i].current.distance
-                * ((imageSubitem==0) ? 1 : 1.3)
-                + (Math.sin(r + 2 * Math.PI * i / CAR_QTY)/3) * 50;
-            items[i].subitems[imageSubitem].current.position.z = 
-                posAtDist1.z * items[i].current.distance
-                * ((imageSubitem==0) ? 1 : 1.3);
-            
-            // apply it to mesh
-            items[i].subitems[imageSubitem].mesh.position.x = items[i].subitems[imageSubitem].current.position.x;
-            items[i].subitems[imageSubitem].mesh.position.y = items[i].subitems[imageSubitem].current.position.y;
-            items[i].subitems[imageSubitem].mesh.position.z = items[i].subitems[imageSubitem].current.position.z;
-        }
-        
-        
-        
-        function L3_computeCurrentMeshRotationForSubitem(i, imageSubitem) {
-            // step 1: compute angles
-            // warning: the following code is duplicated !
-            var angle0ThisSubitem_Degrees = items[i].current.angle0_Degrees + items[i].subitems[imageSubitem].current.angle0Offset_Degrees;
-            var angle1ThisSubitem_Degrees = items[i].current.angle1_Degrees + items[i].subitems[imageSubitem].current.angle1Offset_Degrees;
-
-            
-            var tempOnlyForRotInfo =new THREE.Object3D();
-            tempOnlyForRotInfo.rotateOnAxis(Y_AXIS, angle0ThisSubitem_Degrees  * Math.PI/180);
-            tempOnlyForRotInfo.rotateOnAxis(X_AXIS, - angle1ThisSubitem_Degrees  * Math.PI/180);
-
-            items[i].subitems[imageSubitem].current.rotation = {};
-            items[i].subitems[imageSubitem].current.rotation.x = tempOnlyForRotInfo.rotation.x;
-            items[i].subitems[imageSubitem].current.rotation.y = tempOnlyForRotInfo.rotation.y;
-            items[i].subitems[imageSubitem].current.rotation.z = tempOnlyForRotInfo.rotation.z;
-            items[i].subitems[imageSubitem].mesh.rotation.x = tempOnlyForRotInfo.rotation.x;
-            items[i].subitems[imageSubitem].mesh.rotation.y = tempOnlyForRotInfo.rotation.y;
-            items[i].subitems[imageSubitem].mesh.rotation.z = tempOnlyForRotInfo.rotation.z;
-            
-        }
+//        function OBSOLETE_L3_computeCurrentMeshPositionForSubitem(i, imageSubitem) {
+//            // step 1: compute angles
+//            // warning: the following code is duplicated !
+//            var angle0ThisSubitem_Degrees = items[i].current.angle0_Degrees + /*TILE_DEGREE_SPAN_AT_SPHERE_DISTANCE*/ items[i].subitems[imageSubitem].current.angle0Offset_Degrees;
+//            var angle1ThisSubitem_Degrees = items[i].current.angle1_Degrees + items[i].subitems[imageSubitem].current.angle1Offset_Degrees;
+//            var posAtDist1 = basic_convertAngle0and1_Degrees_ToXandYandZAtDist1(angle0ThisSubitem_Degrees, angle1ThisSubitem_Degrees);
+//            // step 2: compute position
+//            items[i].subitems[imageSubitem].current.position = {};
+////            items[i].subitems[imageSubitem].current.position.x = 
+//                posAtDist1.x * items[i].current.distance 
+//                * ((imageSubitem==0) ? 1 : 1.3);
+//            items[i].subitems[imageSubitem].current.position.y = 
+//                posAtDist1.y * items[i].current.distance
+//                * ((imageSubitem==0) ? 1 : 1.3)
+//                + (Math.sin(r + 2 * Math.PI * i / CAR_QTY)/3) * 50;
+//            items[i].subitems[imageSubitem].current.position.z = 
+//                posAtDist1.z * items[i].current.distance
+//                * ((imageSubitem==0) ? 1 : 1.3);
+//            
+//            // apply it to mesh
+//            items[i].subitems[imageSubitem].mesh.position.x = items[i].subitems[imageSubitem].current.position.x;
+//            items[i].subitems[imageSubitem].mesh.position.y = items[i].subitems[imageSubitem].current.position.y;
+//            items[i].subitems[imageSubitem].mesh.position.z = items[i].subitems[imageSubitem].current.position.z;
+//        }
+//        
+//        
+//        
+//        function OBSOLETE_L3_computeCurrentMeshRotationForSubitem(i, imageSubitem) {
+//            // step 1: compute angles
+//            // warning: the following code is duplicated !
+//            var angle0ThisSubitem_Degrees = items[i].current.angle0_Degrees + items[i].subitems[imageSubitem].current.angle0Offset_Degrees;
+//            var angle1ThisSubitem_Degrees = items[i].current.angle1_Degrees + items[i].subitems[imageSubitem].current.angle1Offset_Degrees;
+//
+//            
+//            var tempOnlyForRotInfo =new THREE.Object3D();
+//            tempOnlyForRotInfo.rotateOnAxis(Y_AXIS, angle0ThisSubitem_Degrees  * Math.PI/180);
+//            tempOnlyForRotInfo.rotateOnAxis(X_AXIS, - angle1ThisSubitem_Degrees  * Math.PI/180);
+//
+//            items[i].subitems[imageSubitem].current.rotation = {};
+//            items[i].subitems[imageSubitem].current.rotation.x = tempOnlyForRotInfo.rotation.x;
+//            items[i].subitems[imageSubitem].current.rotation.y = tempOnlyForRotInfo.rotation.y;
+//            items[i].subitems[imageSubitem].current.rotation.z = tempOnlyForRotInfo.rotation.z;
+//            items[i].subitems[imageSubitem].mesh.rotation.x = tempOnlyForRotInfo.rotation.x;
+//            items[i].subitems[imageSubitem].mesh.rotation.y = tempOnlyForRotInfo.rotation.y;
+//            items[i].subitems[imageSubitem].mesh.rotation.z = tempOnlyForRotInfo.rotation.z;
+//            
+//        }
         
         function basic_compute_dirRelativeAway(in_0to1, itemLength_0toInf) {
             return (itemLength_0toInf * (Math.cos(Math.PI/2 * in_0to1)) /* / 2 */ );
@@ -723,8 +729,6 @@ It has been developed with the help of a great many people including (but not li
         }
 
         function L2_computeCurrentMeshForSubitem(i, imageSubitem) {
-//            L3_computeCurrentMeshPositionForSubitem(i, imageSubitem);
-//            L3_computeCurrentMeshRotationForSubitem(i, imageSubitem);
             L3_computeCurrentMeshPositionAndRotationForSubitem(i, imageSubitem);
             L3_computeCurrentMeshScaleForSubitem(i, imageSubitem);
         }
