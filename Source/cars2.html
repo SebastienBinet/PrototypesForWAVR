@@ -24,7 +24,7 @@ It has been developed with the help of a great many people including (but not li
 
 <html lang="en">
 	<head>
-		<title>webVR boilerplate</title>
+		<title>Cars2</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -165,7 +165,7 @@ It has been developed with the help of a great many people including (but not li
         
 
         // test text
-        var textToDisplay = "test";
+        var textToDisplay = "--test--";
         var textShapes = THREE.FontUtils.generateShapes( textToDisplay, {'font' : 'helvetiker','weight' : 'normal', 'style' : 'normal','size' : 1,'curveSegments' : 300} );
         var text = new THREE.ShapeGeometry( textShapes );
         var textMesh = new THREE.Mesh( text, new THREE.MeshBasicMaterial( { color: 0xff0000 } ) ) ;
@@ -202,9 +202,9 @@ It has been developed with the help of a great many people including (but not li
 		Rain Button
 		*/
 
-		var rainButtonMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "../images/maserati_1.jpg" ), side: THREE.DoubleSide, transparent: true});
-		var rainButtonGeometry = new THREE.PlaneBufferGeometry (SQUARE_TILE_SPAN, 0.1);
-		var rainButton = new THREE.Mesh( rainButtonGeometry, rainButtonMaterial );
+		// var rainButtonMaterial = new THREE.MeshBasicMaterial({color: 0xffffff, map: new THREE.ImageUtils.loadTexture( "../images/maserati_1.jpg" ), side: THREE.DoubleSide, transparent: true});
+		// var rainButtonGeometry = new THREE.PlaneBufferGeometry (SQUARE_TILE_SPAN, 0.1);
+		var rainButton = new THREE.Mesh( subitemGeometry, rainButtonMaterial );
 		rainButton.position.x = 3;
 		rainButton.position.y = -1.5;
 		rainButton.position.z = -10;

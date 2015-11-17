@@ -1,0 +1,273 @@
+<!--
+
+This is based on ThreeJS-based boilerplate for webVR
+	used by the eleVR team.
+
+It has oculus support for webVR browsers, support for the non-VR web,
+	and support for smartphone on google cardboard or similar VR device.
+
+Supported Navigation Controls:
+	WASD + E/Q navigation support for rotation.
+	Arrow key navigation support for moving the location of the camera.
+	Gamepad joystick navigation controls.
+	Orientation control with a VR headset OR mobile phone.
+
+Click to enter full-screen VR mode.
+
+This boilerplate is based on Mozilla's boilerplate: https://github.com/MozVR/vr-web-examples/tree/master/threejs-vr-boilerplate
+
+It has been developed with the help of a great many people including (but not limited to) Vi Hart, Andrew Lutomirski, Henry Segerman, and the Firefox webVR team.
+
+-->
+
+<!DOCTYPE html>
+
+<html lang="en">
+	<head>
+		<title>Menus 2</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #000;
+				color: #fff;
+				margin: 0px;
+				padding: 0;
+				overflow: hidden;
+			}
+		</style>
+	</head>
+
+	<body>
+		
+	</body>
+
+	<!--
+	three.js 3d library
+	-->
+	<script src="../js/three.min.js"></script>
+
+	<!--
+	PhoneVR acquires positional information from phone orientation. This is used by VRControls.js
+	VRControls.js acquires positional information from connected VR devices and applies the transformations to a three.js camera object.
+	 -->
+
+	<script src="../js/PhoneVR.js"></script>
+	<script src="../js/VRControls.js"></script>
+
+	<!--
+	VREffect.js handles stereo camera setup and rendering.
+	-->
+	<script src="../js/VREffect.js"></script>
+
+	<!--
+	Additional sources
+	-->
+	<script src="../js/VRCursor.js"></script>
+    
+    <script src="../lib/fonts/helvetiker_regular.typeface.js"></script>
+    <script src="../lib/fonts/helvetiker_bold.typeface.js"></script>
+    <script src="../js/Menus2_WAVR_MenuLayout.js"></script>
+
+	<script>
+        var SPHERE_DISTANCE = 7;
+        var scene;
+        var camera;
+        var controls;
+        var effect;
+        var renderer;
+        var cursor;
+        var selectables = [];
+        var previouslySelected = {};
+        
+    
+
+        
+        setupWebVR();
+        initWindow();
+        createCursor();
+        
+        menuLayout_Filters.createAndDrawMenuFunction();
+        
+// OLD way        createSceneLayout();
+        addButtons();
+        animate();	// Kick off animation loop
+
+        
+        function createCursor() {
+            cursor = new VRCursor();
+            cursor.ready.then(function() {
+                scene.add(cursor.layout);
+                cursor.init(renderer.domElement, camera, scene, selectables);
+                cursor.enable();
+            });
+        }
+        
+        function HandleCursorEffect() {
+			//The Rain button hilighter
+			if (cursor.enabled) {
+        		cursor.updatePosition();
+                var objectUnderCursor = cursor.objectMouseOver;
+                
+                var caseToProcess;
+                // case x: change from cursor-over-NO-object to cursor-OVER-an-object 
+                if (!previouslySelected && objectUnderCursor){
+//                    console.log("cursor just entered: " +  (objectUnderCursor.___MESH_NAME ? objectUnderCursor.___MESH_NAME : "unidentified mesh" ));
+                    if (objectUnderCursor.hoverStateJustEnteredCallback) {
+                        objectUnderCursor.hoverStateJustEnteredCallback(objectUnderCursor);
+                    }
+                }
+                
+                // case x: change from cursor-OVER-an-object to cursor-over-NO-object 
+                if (previouslySelected && !objectUnderCursor){
+//                    console.log("cursor just leaved: " +  (previouslySelected.___MESH_NAME ? previouslySelected.___MESH_NAME : "unidentified mesh" ));
+                    // we should indicate the previous object that we are leaving it
+                    if (previouslySelected.hoverStateJustLeftCallback ) {
+                        previouslySelected.hoverStateJustLeftCallback(objectUnderCursor);
+                    }
+                    
+                }
+
+                // case x: change from cursor-OVER-an-object to cursor-over-a-SECOND-object 
+                if (previouslySelected && objectUnderCursor && (objectUnderCursor != previouslySelected)){
+                    console.log("cursor just switched from : " +  (objectUnderCursor.___MESH_NAME ? objectUnderCursor.___MESH_NAME : "unidentified mesh" ) + " to: " +  (previouslySelected.___MESH_NAME ? previouslySelected.___MESH_NAME : "unidentified mesh" ));
+                    // we should indicate the previous object that we are leaving it
+                    if (previouslySelected.hoverStateJustLeftCallback ) {
+                        previouslySelected.hoverStateJustLeftCallback(objectUnderCursor);
+                    }
+                    if (objectUnderCursor.hoverStateJustEnteredCallback) {
+                        objectUnderCursor.hoverStateJustEnteredCallback(objectUnderCursor);
+                    }                 
+                }
+
+                // case x: stay cursor-over-NO-cursor
+                if (!previouslySelected && !objectUnderCursor){
+                    
+                }
+
+                // case x: stay cursor-OVER-an-object 
+                if (previouslySelected && objectUnderCursor && (objectUnderCursor === previouslySelected)){
+                    if (objectUnderCursor.hoverStateContinuedCallback) {
+                        objectUnderCursor.hoverStateContinuedCallback();
+                    }
+    
+                }
+                
+                // prepare for next time
+                previouslySelected = objectUnderCursor;
+            }
+        }
+
+ 
+        function addButtons() {
+//            createSlidingSelect({posCenter:{x:-1.25, y:4.5}, fullLength:20, fullHeight:2, textOnSlider:"2010", callback:setYearCallback, choiceInfo:"2010"});
+//            createSlidingSelect({posCenter:{x:8.7, y:1.7}, fullLength:20, fullHeight:2, textOnSlider:"BMW", callback:setBrandCallback, choiceInfo:"BMW"});
+//            createSlidingSelect({posCenter:{x:18.8, y:-0.7}, fullLength:20, fullHeight:2, textOnSlider:"Laval", callback:setCityCallback, choiceInfo:"Laval"});
+        }
+                                
+        function setYearCallback(choiceInfo) {
+            console.log("(" + choiceInfo + ")");
+            setYear(choiceInfo);
+        }
+        function setBrandCallback(choiceInfo) {
+            console.log("setBrand(" + choiceInfo + ")");
+            setBrand(choiceInfo);
+        }
+        function setCityCallback(choiceInfo) {
+            console.log("setCity(" + choiceInfo + ")");
+            setCity(choiceInfo);
+        }
+    
+        function emptyCallback(callbackArg) {
+//            console.log("######## ERROR: EMPTY CALLBACK was called ");
+
+        }
+        
+        function setupWebVR(){
+            var SPHERE_DISTANCE = 7;
+
+            // Setup three.js WebGL renderer
+            renderer = new THREE.WebGLRenderer( { antialias: true } );
+
+
+            // Append the canvas element created by the renderer to document body element.
+            document.body.appendChild( renderer.domElement );
+
+            //Create a three.js scene
+            scene = new THREE.Scene();
+
+            //Create a three.js camera
+            camera = new THREE.PerspectiveCamera( 110, window.innerWidth / window.innerHeight, 1, 10000 );
+            camera.position.y = 0;
+            camera.position.x = 0;
+            camera.position.z = 0;
+            scene.add(camera);
+
+            //Apply VR headset positional data to camera.
+            controls = new THREE.VRControls( camera, undefined, 3 );
+            // controls.enableGamepad(false);
+            // controls.enableWASD(false);
+            // controls.enableArrows(false);
+
+            //Apply VR stereo rendering to renderer
+            effect = new THREE.VREffect( renderer );
+            effect.setSize( window.innerWidth, window.innerHeight );
+        }
+
+		function animate() {
+            HandleCursorEffect();
+
+
+            //Update camera position to stay in box.
+        	if (camera.position.x>13.5){
+        		camera.position.x = 13.5;
+        	}
+        	if (camera.position.x<-13.5){
+        		camera.position.x = -13.5;
+        	}
+        	if (camera.position.z>13.5){
+        		camera.position.z = 13.5;
+        	}
+        	if (camera.position.z<-13.5){
+        		camera.position.z = -13.5;
+        	}
+
+			//Update VR headset position and apply to camera.
+			controls.update();
+
+			// Render the scene through the VREffect.
+			effect.render( scene, camera );
+			requestAnimationFrame( animate );
+		}
+
+
+        function initWindow() {
+            /*
+            Listen for keyboard events
+            */
+            function onkey(event) {
+            event.preventDefault();
+
+            if (event.keyCode == 90) { // z
+                controls.resetSensor(); //zero rotation
+            } else if (event.keyCode == 70 || event.keyCode == 13) { //f or enter
+                effect.setFullScreen(true) //fullscreen
+            } else if (event.keyCode == 32) {//space
+            }
+          }
+
+
+            window.addEventListener("keydown", onkey, true);
+
+            /*
+            Handle window resizes
+            */
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                effect.setSize( window.innerWidth, window.innerHeight );
+            }
+            window.addEventListener( 'resize', onWindowResize, false );
+        }
+	</script>
+</html>
